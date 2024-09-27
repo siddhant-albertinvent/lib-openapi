@@ -30,9 +30,8 @@ const findCustomFlags = (obj, path = '') => {
 };
 
 const extractCustomFieldsEnum = async(service) => {
-  return await GetCustomFields("inventories").map(item => ({
-    enum: `Metadata.${item.name}`
-  }));
+  const items = await GetCustomFields(service)
+  return items.map(item => ([`Metadata.${item.name}`].join(",")));
 }
 
 
@@ -43,43 +42,25 @@ const UpdateDynamicContent = async (swaggerDocument) => {
   for (const flag of customFlags) {
     if (flag.key === "x-enum-enable") {
       const enumConfig = flag.value;
+      console.log(enumConfig);
       let enumValue;
 
       // Check if the source is "customFields"
       if (enumConfig.source === "customFields") {
         // Use await to fetch enum value asynchronously
-        enumValue = await extractCustomFieldsEnum(enumConfig.service);
+        enumValue = await extractCustomFieldsEnum(enumConfig.params.service);
       }
 
       // Get the specific item from the document and update it
       const docItem = getItemFromPath(swaggerDocument, flag.path);
       if (docItem) {
         docItem['enum'] = enumValue;
+        console.log(docItem);
       }
     }
   }
 
   return swaggerDocument;
 };
-
-// const UpdateDynamicContent = async (swaggerDocument) => {
-//   const customFlags = findCustomFlags(swaggerDocument, "");
-//   customFlags.forEach(flag => {
-//       if(flag.key === "x-enum-enable") {
-//         const enumConfig = flag.value;
-//         let enumValue;
-//         if(enumConfig.source === "customFields") {
-//           enumValue = await extractCustomFieldsEnum(flag.value.service);
-//         }
-
-//         const docItem = getItemFromPath(swaggerDocument, flag.path);
-//         docItem['enum'] = enumValue;
-//       }
-//   });
-//   return swaggerDocument;
-
-// }
-
-
 
 module.exports = {UpdateDynamicContent}
